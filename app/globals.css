@@ -24,3 +24,116 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================
+   AURAGLANCE GLOBAL READABILITY FIX
+   Ensures learning content is always readable
+   ============================================ */
+
+/* Main application content */
+main {
+  color: #1e293b;
+}
+
+/* Learning and educational content */
+main p,
+main li,
+main span:not(button span):not(a span),
+main label {
+  color: inherit;
+}
+
+/* Strong readable table system */
+main table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+main table thead {
+  background: #eff6ff !important;
+}
+
+main table th {
+  background: #eff6ff !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 14px 16px !important;
+  text-align: left !important;
+}
+
+main table td {
+  color: #1e293b !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  padding: 14px 16px !important;
+  font-weight: 400 !important;
+}
+
+main table tr:nth-child(even) td {
+  background: #f8fafc !important;
+}
+
+main table tbody tr:hover td {
+  background: #f1f5f9 !important;
+}
+
+/* Explicit text readability for educational content */
+main .text-slate-300,
+main .text-slate-200 {
+  color: #475569 !important;
+}
+
+/* Quiz questions */
+main h1,
+main h2,
+main h3,
+main h4 {
+  color: #0f172a;
+}
+
+/* Quiz answer text and options */
+main button:not(.bg-blue-600):not(.bg-blue-700):not(.bg-green-600):not(.bg-red-600) {
+  color: #1e293b;
+}
+
+/* Inputs and selects */
+main input,
+main textarea,
+main select {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+
+main input::placeholder,
+main textarea::placeholder {
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+/* Learning cards */
+main .border-slate-200 {
+  border-color: #cbd5e1;
+}
+
+/* Code and formula blocks */
+main pre,
+main code {
+  color: #1e293b;
+}
+
+/* Ensure SVG icons remain visible */
+main svg:not(.text-white) {
+  opacity: 1;
+}
+
+/* Fix faded content caused by accidental opacity */
+main article,
+main section:not(.bg-slate-900):not(.bg-blue-600):not(.bg-blue-700),
+main .content {
+  opacity: 1;
+}
+
