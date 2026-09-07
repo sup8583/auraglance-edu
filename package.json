@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "generate:neet": "tsx scripts/generate-neet-content.ts",
-    "generate:neet:auto": "tsx scripts/generate-neet-auto.ts"
+    "generate:neet:auto": "tsx scripts/generate-neet-auto.ts",
+    "seed:courses": "tsx scripts/seed-courses.ts",
+    "seed:syllabus": "tsx scripts/seed-syllabus.ts",
+    "generate:course": "tsx scripts/generate-course-content.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
