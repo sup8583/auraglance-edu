@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { saveQuizAttempt } from "@/lib/services/student-progress";
 
 type LearningPath = {
   id: string;
@@ -30,13 +31,10 @@ type ContentData = {
 type QuizQuestion = {
   id: string;
   question: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_option: string;
+  options: string[];
+  correct_answer: string;
   explanation: string;
-  difficulty: string;
+  question_order: number;
 };
 
 export default function LearningModulePage() {
@@ -49,6 +47,8 @@ export default function LearningModulePage() {
   const module = params.module as string;
 
   const [path, setPath] = useState<LearningPath | null>(null);
+  const [subjectId, setSubjectId] = useState("");
+  const [chapterId, setChapterId] = useState("");
   const [content, setContent] = useState<ContentData | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +90,28 @@ export default function LearningModulePage() {
       }
 
       setPath(pathData);
+
+      const { data: subjectData, error: subjectError } = await supabase
+        .from("subjects")
+        .select("id")
+        .eq("learning_path_id", pathData.id)
+        .eq("slug", subject)
+        .single();
+
+      if (!subjectError && subjectData) {
+        setSubjectId(subjectData.id);
+
+        const { data: chapterData, error: chapterError } = await supabase
+          .from("chapters")
+          .select("id")
+          .eq("subject_id", subjectData.id)
+          .eq("chapter_order", chapter)
+          .single();
+
+        if (!chapterError && chapterData) {
+          setChapterId(chapterData.id);
+        }
+      }
 
       if (module === "quiz") {
         const { data: quizData, error: quizError } = await supabase
@@ -145,15 +167,57 @@ export default function LearningModulePage() {
 
     if (
       questions[currentQuestion] &&
-      selectedAnswer === questions[currentQuestion].correct_option
+      selectedAnswer === questions[currentQuestion].correct_answer
     ) {
       setScore((previous) => previous + 1);
     }
   }
 
-  function nextQuestion() {
+  async function nextQuestion() {
     if (currentQuestion + 1 >= questions.length) {
       setQuizFinished(true);
+
+      try {
+        const supabase = createClient();
+
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (
+          user &&
+          path &&
+          subjectId &&
+          chapterId
+        ) {
+          const answers = questions.map(
+            (question, index) => ({
+              question_id: question.id,
+              selected_answer:
+                index === currentQuestion
+                  ? selectedAnswer
+                  : null,
+              correct_answer: question.correct_answer,
+            })
+          );
+
+          await saveQuizAttempt({
+            userId: user.id,
+            learningPathId: path.id,
+            subjectId,
+            chapterId,
+            totalQuestions: questions.length,
+            correctAnswers: score,
+            answers,
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Error saving quiz progress:",
+          error
+        );
+      }
+
       return;
     }
 
@@ -694,72 +758,58 @@ export default function LearningModulePage() {
 
                   <div className="mt-7 space-y-3">
 
-                    {[
-                      {
-                        key: "A",
-                        text: questions[currentQuestion]?.option_a,
-                      },
-                      {
-                        key: "B",
-                        text: questions[currentQuestion]?.option_b,
-                      },
-                      {
-                        key: "C",
-                        text: questions[currentQuestion]?.option_c,
-                      },
-                      {
-                        key: "D",
-                        text: questions[currentQuestion]?.option_d,
-                      },
-                    ].map((option) => {
+                    {(questions[currentQuestion]?.options || []).map(
+                      (optionText, index) => {
+                        const optionKey = String.fromCharCode(65 + index);
 
-                      const isSelected =
-                        selectedAnswer === option.key;
+                        const isSelected =
+                          selectedAnswer === optionText;
 
-                      const isCorrect =
-                        showAnswer &&
-                        option.key ===
-                          questions[currentQuestion]?.correct_option;
+                        const isCorrect =
+                          showAnswer &&
+                          optionText ===
+                            questions[currentQuestion]?.correct_answer;
 
-                      const isWrong =
-                        showAnswer &&
-                        isSelected &&
-                        !isCorrect;
+                        const isWrong =
+                          showAnswer &&
+                          isSelected &&
+                          !isCorrect;
 
-                      return (
+                        return (
 
-                        <button
-                          key={option.key}
-                          onClick={() =>
-                            selectAnswer(option.key)
-                          }
-                          className={`w-full rounded-xl border p-4 text-left transition
+                          <button
+                            key={optionKey}
+                            onClick={() =>
+                              selectAnswer(optionText)
+                            }
+                            className={`w-full rounded-xl border p-4 text-left transition
 
-                          ${
-                            isCorrect
-                              ? "border-green-500 bg-green-50"
-                              : isWrong
-                              ? "border-red-500 bg-red-50"
-                              : isSelected
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-slate-200 hover:border-blue-300"
-                          }`}
+                            ${
+                              isCorrect
+                                ? "border-green-500 bg-green-50"
+                                : isWrong
+                                ? "border-red-500 bg-red-50"
+                                : isSelected
+                                ? "border-blue-500 bg-blue-50"
+                                : "border-slate-200 hover:border-blue-300"
+                            }`}
 
-                        >
+                          >
 
-                          <span className="font-semibold">
-                            {option.key}.
-                          </span>
+                            <span className="font-semibold">
+                              {optionKey}.
+                            </span>
 
-                          <span className="ml-3">
-                            {option.text}
-                          </span>
+                            <span className="ml-3">
+                              {optionText}
+                            </span>
 
-                        </button>
+                          </button>
 
-                      );
+                        );
 
-                    })}
+                      }
+                    )}
 
                   </div>
 
